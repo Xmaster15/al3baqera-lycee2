@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>دوري عباقرة الليسية</title>
+<style>
+:root{
+  --bg:#0b0d10; --card:#12151b; --muted:#1a1f27; --text:#e6e9ef; --sub:#aab1bd;
+  --accent:#7c5cff; --accent2:#22d3ee; --ring:rgba(124,92,255,.45); --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial;color:var(--text);background:
+  radial-gradient(1200px 600px at 10% -10%, rgba(124,92,255,.12), transparent 60%),
+  radial-gradient(900px 500px at 110% 10%, rgba(34,211,238,.07), transparent 60%),
+  var(--bg);}
+.container{max-width:1200px;margin:0 auto;padding:20px}
+.header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px}
+.logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),var(--accent2));box-shadow:0 8px 28px rgba(12,10,20,.6)}
+.title h1{margin:0;font-size:20px}
+.subtitle{color:var(--sub);font-size:13px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{appearance:none;border:1px solid transparent;background:linear-gradient(180deg, rgba(124,92,255,.12), rgba(124,92,255,.04));color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer;font-weight:600}
+.ghost{background:var(--muted);border-color:#232a35}
+.pill{background:var(--muted);padding:8px 12px;border-radius:999px;color:var(--sub);font-size:13px}
+.grid{display:grid;grid-template-columns:1.4fr .6fr;gap:16px}
+@media(max-width:1024px){.grid{grid-template-columns:1fr}}
+.card{background:linear-gradient(0deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)),var(--card);border:1px solid #1d232e;border-radius:var(--radius);padding:12px}
+.leagues-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:900px){.leagues-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:640px){.leagues-grid{grid-template-columns:1fr}}
+.league{border-radius:12px;background:#0f1419;border:1px solid #1d232e;overflow:hidden}
+.league .head{padding:10px 12px;border-bottom:1px solid #1d232e}
+.league h3{margin:0;font-size:14px}
+table{width:100%;border-collapse:collapse}
+th,td{padding:8px 10px;font-size:13px}
+thead th{color:var(--sub);border-bottom:1px solid #1d232e}
+tbody tr{border-bottom:1px dashed #1d232e}
+.rank{width:36px;color:var(--sub);text-align:right}
+input.score{width:64px;padding:6px;border-radius:8px;border:1px solid #24313d;background:#0b1016;color:var(--text);font-weight:700}
+[contenteditable]{outline:none;padding:4px}
+[contenteditable]:focus{box-shadow:0 0 0 4px rgba(124,92,255,.06);background:rgba(124,92,255,.02)}
+.bracket-wrap{padding:12px;margin-top:14px}
+.bracket{display:grid;grid-template-columns:repeat(5,minmax(180px,1fr));gap:12px;overflow-x:auto;padding-bottom:8px}
+.round{display:flex;flex-direction:column;gap:12px}
+.round h4{margin:0;color:var(--sub);font-size:12px;text-transform:uppercase}
+.match{background:#0f141b;border:1px solid #1d232e;border-radius:12px;padding:8px;position:relative}
+.row{display:grid;grid-template-columns:1fr 56px;gap:8px;align-items:center}
+.team{font-size:13px;padding:6px 8px;border-radius:8px;background:#0b0f15;border:1px solid #1a222e}
+.score{width:56px;text-align:center;border-radius:8px;padding:6px;border:1px solid #293344;background:#0b1016;color:var(--text);font-weight:700}
+.champion{padding:16px;border-radius:12px;border:1px dashed #263042;text-align:center;color:var(--accent2);font-weight:800}
+.next{padding:12px;display:grid;gap:10px}
+.next .upcoming{display:flex;align-items:center;justify-content:space-between;background:#0e131a;border:1px solid #1d232e;border-radius:12px;padding:12px}
+.next .names{font-size:16px;font-weight:800}
+.next input[type="text"], .next input[type="datetime-local"], .next input[type="file"]{width:100%;padding:8px;border-radius:8px;border:1px solid #263041;background:#0c1016;color:var(--text)}
+.next .pic{display:flex;gap:12px;align-items:center}
+.next .pic img{width:64px;height:64px;border-radius:10px;object-fit:cover;border:2px solid #19222b}
+.footer{color:var(--sub);text-align:center;margin-top:16px;font-size:13px}
+.hidden{display:none}
+.next-match-top {margin-bottom: 20px;}
+.file-actions {display: flex; gap: 8px; margin-top: 12px;}
+</style>
+</head>
+<body>
+<div class="container">
+  <!-- المباراة القادمة في الأعلى -->
+  <section class="card next-match-top">
+    <header><h2>Next Match</h2></header>
+    <div class="next">
+      <div class="upcoming" id="nextDisplay">
+        <div>
+          <div class="names" id="nextNames">Team A vs Team B</div>
+          <div class="when" id="nextWhen">—</div>
+        </div>
+        <div class="pill" id="countdown">Set kickoff →</div>
+      </div>
+
+      <div id="nextMatchEdit" class="hidden">
+        <div style="display:grid;gap:8px;margin-top:8px">
+          <label>Home team name</label>
+          <input id="homeName" type="text" placeholder="Home team" />
+          <label>Away team name</label>
+          <input id="awayName" type="text" placeholder="Away team" />
+          <label>Kickoff (date & time)</label>
+          <input id="kickInput" type="datetime-local" />
+          <div class="pic">
+            <div>
+              <label>Home image</label><br>
+              <img id="homeImg" src="" alt=""><br>
+              <input id="uploadHome" type="file" accept="image/*">
+            </div>
+            <div>
+              <label>Away image</label><br>
+              <img id="awayImg" src="" alt=""><br>
+              <input id="uploadAway" type="file" accept="image/*">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button class="btn ghost" id="btnSaveNext">Save Next Match</button>
+            <button class="btn ghost" id="btnClearNext">Clear</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="header">
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <div class="title">
+        <h1>Leagues & Knockout Dashboard</h1>
+        <div class="subtitle">Dark theme • Editable by admin only • Save/Load from file</div>
+      </div>
+    </div>
+    <div class="toolbar" id="toolbarPublic">
+      <button class="btn" id="btnLogin">🔐 Admin Login</button>
+      <button class="btn ghost hidden" id="btnLogout">🚪 Logout</button>
+      <button class="btn ghost hidden" id="btnToggleEdit">✏️ Toggle Edit</button>
+      <button class="btn ghost hidden" id="btnFillR16">🧩 Fill Round of 16</button>
+      <button class="btn ghost hidden" id="btnSaveFile">💾 Save to File</button>
+      <button class="btn ghost" id="btnLoadFile">📂 Load from File</button>
+      <button class="btn ghost hidden" id="btnReset">♻ Reset</button>
+    </div>
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <header><h2>League Tables (6 × 4 teams)</h2></header>
+      <div class="leagues-grid" id="leaguesRoot"></div>
+    </section>
+
+    <aside class="card">
+      <header><h2>Quick Actions</h2></header>
+      <div style="display: grid; gap: 10px; padding: 12px;">
+        <button class="btn ghost" id="btnViewBracket">🏆 View Bracket</button>
+        <button class="btn ghost" id="btnViewNextMatch">⏱️ View Next Match</button>
+        <div class="file-actions">
+          <button class="btn ghost" id="btnDownload">📥 Download Data</button>
+          <button class="btn ghost" id="btnUpload">📤 Upload Data</button>
+        </div>
+        <div class="pill">Last saved: <span id="lastSaved">—</span></div>
+      </div>
+    </aside>
+  </div>
+
+  <section class="card" style="margin-top:14px">
+    <header><h2>Knockout Stage (Round of 16 → Final)</h2></header>
+    <div class="bracket-wrap"><div class="bracket" id="bracketRoot"></div></div>
+  </section>
+
+  <div class="footer">Tip: Admin must log in (password) to edit. Use "Fill Round of 16" to auto-fill from groups (1st+2nd + best 4 thirds).</div>
+</div>
+
+<script>
+// ===== DEFAULT STATE =====
+const DEFAULT = {
+  leagues: Array.from({length:6}).map((_,gi)=>({
+    name: `League ${String.fromCharCode(65+gi)}`,
+    teams: Array.from({length:4}).map((__,ti)=>({ name: `Team ${gi*4 + ti +1}`, pts: 0 }))
+  })),
+  bracket: {
+    R16: Array.from({length:8}).map((_,i)=>({team1:`R16 Team ${i*2+1}`, score1:"", team2:`R16 Team ${i*2+2}`, score2:""})),
+    QF: Array.from({length:4}).map(()=>({team1:"",score1:"",team2:"",score2:""})),
+    SF: Array.from({length:2}).map(()=>({team1:"",score1:"",team2:"",score2:""})),
+    F: [{team1:"",score1:"",team2:"",score2:""}],
+    Champion: ""
+  },
+  nextMatch: { home: "Team A", away: "Team B", kickoff: "", homeImg:"", awayImg:"" },
+  editMode: false,
+  isAdmin: false
+};
+
+let state = JSON.parse(JSON.stringify(DEFAULT));
+
+// ===== File Operations =====
+function downloadData() {
+  const dataStr = JSON.stringify(state, null, 2);
+  const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+  
+  const exportFileDefaultName = 'tournament-data.json';
+  
+  const linkElement = document.createElement('a');
+  linkElement.setAttribute('href', dataUri);
+  linkElement.setAttribute('download', exportFileDefaultName);
+  linkElement.click();
+  
+  document.getElementById('lastSaved').textContent = new Date().toLocaleTimeString();
+  alert('Data downloaded successfully!');
+}
+
+function uploadData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const fileContent = e.target.result;
+      const parsedData = JSON.parse(fileContent);
+      
+      // Validate the structure
+      if (parsedData.leagues && parsedData.bracket && parsedData.nextMatch) {
+        state = parsedData;
+        renderAll();
+        document.getElementById('lastSaved').textContent = new Date().toLocaleTimeString();
+        alert('Data loaded successfully!');
+      } else {
+        alert('Invalid file format. Please upload a valid tournament data file.');
+      }
+    } catch (error) {
+      alert('Error parsing file: ' + error.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ===== Helpers =====
+const $ = sel => document.querySelector(sel);
+const $$ = sel => document.querySelectorAll(sel);
+function el(tag, attrs={}, children=[]){ const n=document.createElement(tag); for(const k in attrs){ if(k==='class') n.className=attrs[k]; else if(k==='html') n.innerHTML=attrs[k]; else n.setAttribute(k, attrs[k]); } (children||[]).forEach(c=>n.appendChild(typeof c==='string'?document.createTextNode(c):c)); return n; }
+function toNum(v){ const n=Number(String(v).replace(/[^0-9\-\.]/g,'')); return Number.isFinite(n)?n:0; }
+
+// ===== LEAGUES RENDER =====
+const leaguesRoot = $('#leaguesRoot');
+function renderLeagues(){
+  leaguesRoot.innerHTML = '';
+  state.leagues.forEach((league, li)=>{
+    const box = el('div',{class:'league'});
+    const head = el('div',{class:'head'}, [el('h3',{html: league.name})]);
+    if(state.editMode){
+      head.querySelector('h3').setAttribute('contenteditable','true');
+      head.querySelector('h3').addEventListener('input', e=>{ state.leagues[li].name = e.target.textContent.trim() || `League ${li+1}`; });
+    }
+    const table = el('table');
+    const thead = el('thead'); thead.innerHTML = `<tr><th class="rank">#</th><th>Team</th><th class="num">Pts</th></tr>`;
+    const tbody = el('tbody');
+    // ensure teams sorted by pts desc for display
+    const sorted = league.teams.slice().sort((a,b)=>b.pts - a.pts);
+    sorted.forEach((team, idx)=>{
+      const tr = el('tr');
+      tr.innerHTML = `<td class="rank">${String(idx+1).padStart(2,'0')}</td>`;
+      const nameCell = el('td',{html: team.name});
+      if(state.editMode){
+        nameCell.setAttribute('contenteditable','true');
+        nameCell.addEventListener('input', e=>{ team.name = e.target.textContent.trim(); });
+      }
+      const ptsTd = el('td');
+      const ptsInput = el('input', {class:'score', type:'number', value: team.pts});
+      if(!state.editMode) ptsInput.setAttribute('disabled','true');
+      ptsInput.addEventListener('input', e=>{
+        team.pts = toNum(e.target.value);
+        // write back to league original team object (find by name could be ambiguous; we will update by index)
+        // Find original index by matching name; safer approach: mutate the original array by index of sorted element
+        // We'll map sorted idx to original team by identity:
+        league.teams = sorted.map(s=>({name:s.name, pts:s.pts})); // replace order in underlying data
+        renderLeagues();
+        renderBracketAuto(); // update bracket if needed
+      });
+      ptsTd.appendChild(ptsInput);
+      tr.appendChild(nameCell);
+      tr.appendChild(ptsTd);
+      tbody.appendChild(tr);
+    });
+    table.appendChild(thead); table.appendChild(tbody);
+    box.appendChild(head); box.appendChild(table);
+    leaguesRoot.appendChild(box);
+  });
+}
+
+// ===== BRACKET RENDER =====
+const bracketRoot = $('#bracketRoot');
+function winnerOf(m){ const s1=toNum(m.score1), s2=toNum(m.score2); if(m.score1===''&&m.score2==='') return ''; if(s1>s2) return m.team1||''; if(s2>s1) return m.team2||''; return ''; }
+function propagateWinners(){
+  state.bracket.QF.forEach((m,i)=>{ const a=state.bracket.R16[i*2], b=state.bracket.R16[i*2+1]; m.team1 = winnerOf(a); m.team2 = winnerOf(b); });
+  state.bracket.SF.forEach((m,i)=>{ const a=state.bracket.QF[i*2], b=state.bracket.QF[i*2+1]; m.team1 = winnerOf(a); m.team2 = winnerOf(b); });
+  const f=state.bracket.F[0]; f.team1 = winnerOf(state.bracket.SF[0]); f.team2 = winnerOf(state.bracket.SF[1]);
+  state.bracket.Champion = winnerOf(f);
+}
+function renderBracket(){
+  bracketRoot.innerHTML = '';
+  const rounds = [{key:'R16',label:'Round of 16'},{key:'QF',label:'Quarterfinals'},{key:'SF',label:'Semifinals'},{key:'F',label:'Final'},{key:'C',label:'Champion'}];
+  rounds.forEach(r=>{
+    if(r.key==='C'){ const col=el('div',{class:'round'}); col.appendChild(el('h4',{},[r.label])); col.appendChild(el('div',{class:'champion',html: state.bracket.Champion||'—'})); bracketRoot.appendChild(col); return; }
+    const matches = state.bracket[r.key];
+    const col = el('div',{class:'round'}); col.appendChild(el('h4',{html:r.label}));
+    matches.forEach((m,idx)=>{
+      const match = el('div',{class:'match'});
+      const row1 = el('div',{class:'row'});
+      const t1 = el('div',{class:'team',html:m.team1||''});
+      if(state.editMode && r.key==='R16'){ t1.setAttribute('contenteditable','true'); t1.addEventListener('input', e=>{ m.team1 = e.target.textContent.trim(); }); }
+      const s1 = el('input',{class:'score',type:'number',value:m.score1});
+      if(!(state.editMode && (r.key==='R16'||r.key==='QF'||r.key==='SF'||r.key==='F'))) s1.setAttribute('disabled','true');
+      s1.addEventListener('input', e=>{ m.score1 = e.target.value; propagateWinners(); renderBracket(); });
+      row1.appendChild(t1); row1.appendChild(s1);
+
+      const row2 = el('div',{class:'row'});
+      const t2 = el('div',{class:'team',html:m.team2||''});
+      if(state.editMode && r.key==='R16'){ t2.setAttribute('contenteditable','true'); t2.addEventListener('input', e=>{ m.team2 = e.target.textContent.trim(); }); }
+      const s2 = el('input',{class:'score',type:'number',value:m.score2});
+      if(!(state.editMode && (r.key==='R16'||r.key==='QF'||r.key==='SF'||r.key==='F'))) s2.setAttribute('disabled','true');
+      s2.addEventListener('input', e=>{ m.score2 = e.target.value; propagateWinners(); renderBracket(); });
+      row2.appendChild(t2); row2.appendChild(s2);
+
+      match.appendChild(row1); match.appendChild(row2);
+      col.appendChild(match);
+    });
+    bracketRoot.appendChild(col);
+  });
+  const champEl = $('#bracketRoot .champion'); if(champEl) champEl.textContent = state.bracket.Champion || '—';
+}
+
+// ===== AUTO FILL R16 from groups =====
+function computeQualified(){
+  const qualified = [];
+  // take first and second from each league (based on pts)
+  state.leagues.forEach(l=>{
+    const sorted = l.teams.slice().sort((a,b)=>b.pts - a.pts);
+    qualified.push(sorted[0]?.name||'?', sorted[1]?.name||'?');
+  });
+  // collect thirds
+  const thirds = state.leagues.map(l => l.teams.slice().sort((a,b)=>b.pts - a.pts)[2]).filter(Boolean);
+  thirds.sort((a,b)=>b.pts - a.pts);
+  const best4 = thirds.slice(0,4).map(t=>t.name);
+  qualified.push(...best4);
+  return qualified.slice(0,16);
+}
+function fillR16FromGroups(){
+  const arr = computeQualified();
+  // map sequential pairs into R16 slots
+  state.bracket.R16.forEach((m, i)=>{
+    m.team1 = arr[i*2] || '';
+    m.team2 = arr[i*2+1] || '';
+    m.score1 = ''; m.score2='';
+  });
+  // clear next rounds
+  state.bracket.QF.forEach(m=>{ m.team1='';m.team2='';m.score1='';m.score2='';});
+  state.bracket.SF.forEach(m=>{ m.team1='';m.team2='';m.score1='';m.score2='';});
+  state.bracket.F.forEach(m=>{ m.team1='';m.team2='';m.score1='';m.score2='';});
+  state.bracket.Champion = '';
+  renderBracket();
+}
+
+// ===== Next Match & Uploads =====
+const homeImgEl = $('#homeImg'), awayImgEl = $('#awayImg'), homeNameEl = $('#homeName'), awayNameEl = $('#awayName'), kickEl = $('#kickInput'), nextNamesEl = $('#nextNames'), nextWhenEl = $('#nextWhen'), countdownEl = $('#countdown'), nextMatchEditEl = $('#nextMatchEdit');
+function renderNext(){
+  homeNameEl.value = state.nextMatch.home; 
+  awayNameEl.value = state.nextMatch.away; 
+  kickEl.value = state.nextMatch.kickoff;
+  
+  nextNamesEl.textContent = `${state.nextMatch.home} vs ${state.nextMatch.away}`;
+  nextWhenEl.textContent = state.nextMatch.kickoff ? new Date(state.nextMatch.kickoff).toLocaleString() : '—';
+  homeImgEl.src = state.nextMatch.homeImg || '';
+  awayImgEl.src = state.nextMatch.awayImg || '';
+  
+  // إظهار أو إخفاء واجهة التعديل بناءً على وضع الأدمن
+  if (state.isAdmin && state.editMode) {
+    nextMatchEditEl.classList.remove('hidden');
+  } else {
+    nextMatchEditEl.classList.add('hidden');
+  }
+}
+function saveNext(){
+  state.nextMatch.home = homeNameEl.value.trim() || 'Team A';
+  state.nextMatch.away = awayNameEl.value.trim() || 'Team B';
+  state.nextMatch.kickoff = kickEl.value || '';
+  renderNext(); 
+  startCountdown();
+}
+function clearNext(){ 
+  state.nextMatch = {home:'Team A', away:'Team B', kickoff:'', homeImg:'', awayImg:''}; 
+  renderNext(); 
+}
+
+// image uploads
+$('#uploadHome').addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader(); r.onload = ev=>{ state.nextMatch.homeImg = ev.target.result; renderNext(); }; r.readAsDataURL(f);
+});
+$('#uploadAway').addEventListener('change', e=>{
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader(); r.onload = ev=>{ state.nextMatch.awayImg = ev.target.result; renderNext(); }; r.readAsDataURL(f);
+});
+
+let countdownTimer = null;
+function startCountdown(){
+  if(countdownTimer) clearInterval(countdownTimer);
+  countdownTimer = setInterval(()=>{
+    if(!state.nextMatch.kickoff){ countdownEl.textContent = 'Set kickoff →'; return; }
+    const t = new Date(state.nextMatch.kickoff).getTime(); 
+    if(!isFinite(t)){ countdownEl.textContent='—'; return; }
+    const diff = t - Date.now(); 
+    if(diff<=0){ countdownEl.textContent='LIVE or finished'; return; }
+    const d = Math.floor(diff/(24*3600e3)), 
+          h = Math.floor((diff%(24*3600e3))/3600e3), 
+          m = Math.floor((diff%3600e3)/60000), 
+          s = Math.floor((diff%60000)/1000);
+    countdownEl.textContent = `${d}d ${String(h).padStart(2,'0')}h ${String(m).padStart(2,'0')}m ${String(s).padStart(2,'0')}s`;
+  },1000);
+}
+
+// ===== Toolbar actions and admin =====
+const ADMIN_PASSWORD = 'admin123';
+function checkAdminStatus() {
+  // التحقق مما إذا كان المستخدم مسؤولاً بالفعل
+  if (state.isAdmin) {
+    toggleAdminUI(true);
+    renderLeagues(); 
+    renderBracket(); 
+    renderNext();
+  } else {
+    // إذا لم يكن مسؤولاً، طلب كلمة المرور
+    const p = prompt('Enter admin password:');
+    if(p === ADMIN_PASSWORD){ 
+      state.isAdmin = true; 
+      state.editMode = true; 
+      toggleAdminUI(true); 
+      renderLeagues(); 
+      renderBracket(); 
+      renderNext(); 
+      alert('Admin mode enabled'); 
+    } else {
+      alert('Wrong password');
+      state.isAdmin = false;
+      state.editMode = false;
+      toggleAdminUI(false);
+    }
+  }
+}
+
+$('#btnLogin').addEventListener('click', checkAdminStatus);
+
+// إضافة وظيفة تسجيل الخروج
+$('#btnLogout').addEventListener('click', () => {
+  state.isAdmin = false;
+  state.editMode = false;
+  toggleAdminUI(false);
+  alert('تم تسجيل الخروج من وضع الأدمن');
+});
+
+function toggleAdminUI(on){
+  if(on){
+    $('#btnLogout').classList.remove('hidden');
+    $('#btnToggleEdit').classList.remove('hidden'); 
+    $('#btnSaveFile').classList.remove('hidden'); 
+    $('#btnReset').classList.remove('hidden'); 
+    $('#btnFillR16').classList.remove('hidden');
+    $('#btnLogin').classList.add('hidden');
+  } else {
+    $('#btnLogout').classList.add('hidden');
+    $('#btnToggleEdit').classList.add('hidden'); 
+    $('#btnSaveFile').classList.add('hidden'); 
+    $('#btnReset').classList.add('hidden'); 
+    $('#btnFillR16').classList.add('hidden');
+    $('#btnLogin').classList.remove('hidden');
+  }
+}
+
+$('#btnToggleEdit').addEventListener('click', ()=>{ 
+  state.editMode = !state.editMode; 
+  renderLeagues(); 
+  renderBracket(); 
+  renderNext(); 
+  $('#btnToggleEdit').textContent = state.editMode ? 'Exit Edit' : 'Edit Mode'; 
+});
+
+$('#btnSaveFile').addEventListener('click', ()=> downloadData());
+
+$('#btnReset').addEventListener('click', ()=>{ 
+  if(confirm('Reset to defaults?')){ 
+    state = JSON.parse(JSON.stringify(DEFAULT)); 
+    renderAll(); 
+  }
+});
+
+$('#btnFillR16').addEventListener('click', ()=>{ 
+  fillR16FromGroups(); 
+  alert('Round of 16 filled from groups'); 
+});
+
+// إضافة مستمعي الأحداث لأزرار المباراة القادمة
+$('#btnSaveNext').addEventListener('click', saveNext);
+$('#btnClearNext').addEventListener('click', clearNext);
+
+// إضافة وظائف للأزرار الجديدة
+$('#btnViewBracket').addEventListener('click', () => {
+  document.querySelector('.bracket-wrap').scrollIntoView({ behavior: 'smooth' });
+});
+
+$('#btnViewNextMatch').addEventListener('click', () => {
+  document.querySelector('.next-match-top').scrollIntoView({ behavior: 'smooth' });
+});
+
+// File operations
+$('#btnDownload').addEventListener('click', downloadData);
+
+$('#btnUpload').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.addEventListener('change', uploadData);
+  input.click();
+});
+
+$('#btnLoadFile').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.addEventListener('change', uploadData);
+  input.click();
+});
+
+// ===== Initialize rendering =====
+function renderBracketAuto(){ propagateWinners(); renderBracket(); }
+function renderAll(){ 
+  renderLeagues(); 
+  renderBracket(); 
+  renderNext(); 
+  startCountdown(); 
+  if(state.isAdmin) toggleAdminUI(true); 
+}
+
+function init(){
+  // ensure leagues data shape
+  if(!state.leagues) state.leagues = DEFAULT.leagues;
+  
+  // عند التهيئة، التحقق مما إذا كان المستخدم مسؤولاً
+  if (state.isAdmin) {
+    // إذا كان مسؤولاً، طلب كلمة المرور
+    checkAdminStatus();
+  } else {
+    renderAll();
+  }
+  
+  // تحديث وقت آخر حفظ
+  document.getElementById('lastSaved').textContent = new Date().toLocaleTimeString();
+}
+
+init();
+
+</script>
+</body>
+</html>
